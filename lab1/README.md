@@ -1,3 +1,5 @@
+# Random Roll Call Machine
+
 ### Simulation guideline
 
 #### This is the step for running simulation of lab1
