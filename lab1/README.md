@@ -1,4 +1,4 @@
-# Random Roll Call Machine
+# Lab 1: Random Roll Call Machine
 
 ### Simulation guideline
 
