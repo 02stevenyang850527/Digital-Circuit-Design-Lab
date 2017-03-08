@@ -1,8 +1,6 @@
-# Lab 1: Random Roll Call Machine
+# Simulation guideline
 
-### Simulation guideline
-
-#### This is the step for running simulation of lab1
+This is the step for running simulation of lab1
 - 1. Login to DCLab server.
 - 2. Keep the directory structure we have provided
 - 3. Type "tool 2" to enable ncsim (for simulation) and
@@ -16,7 +14,7 @@
    are expecting, then you can use nWave to view
    the waveform.
 
-### Notes
+# Notes
 
 By default the simulation runs 1000 cycles Verilog
 simulation and sleep 100ms.

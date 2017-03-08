@@ -1,5 +1,6 @@
 module Top(
 	input i_clk,
+	input i_rst,
 	input i_start,
 	output [3:0] o_random_out
 );
@@ -9,36 +10,59 @@ module Top(
 	parameter FREQ_HZ = 50000000;
 `endif
 
-	localparam MAX_VAL = 15;
-	localparam MIN_VAL = 0;
-	localparam OUTPUT_TIME_1 = 50;
-	localparam OUTPUT_TIME_2 = 100;
-	localparam OUTPUT_TIME_3 = 150;
-	localparam OUTPUT_TIME_4 = 300;
-	localparam OUTPUT_TIME_5 = 600;
-	reg [31:0] counter;
-	reg [ 3:0]  temp;
+	parameter MAX_VAL = 15;
+	parameter MIN_VAL = 0;
+
+	enum {IDLE, RUN} state_w, state_r;
+//	logic state_w, state_r;
+	logic [31:0] 	counter_w, counter_r;
+	logic [3:0]		random_w, random_r;
+
+	logic i_start_tmp;
+	initial begin
+		#5 i_start_tmp = 0;
+		#5 i_start_tmp = 1;
+		#5 i_start_tmp = 0;
+	end
+
+
+	assign o_random_out = random_r;
 
 	always_comb begin
+		counter_w = counter_r + 1;
+		state_w = state_r;
+		random_w = random_r;
 
+		case(state_r)
+			IDLE:	
+					if (i_start == 1) begin
+						state_w = RUN;
+						counter_w = 0;
+						random_w = 0;
+						end
+
+			RUN:	
+					case(counter_r)
+						500,
+						1000,
+						1500,
+						3000,
+						6000: 	begin
+								random_w = $urandom_range(MAX_VAL,MIN_VAL);
+								end
+
+						10000:	begin
+								state_w = IDLE;
+								counter_w = 0;
+								end
+					endcase
+		endcase // state_r
 	end
 
-	always_ff @(posedge i_clk or posedge i_start) begin
-		if(i_start) begin
-			counter <= 32'b0;
-		end else begin
-			temp <= $urandom_range(MAX_VAL, MIN_VAL);
-			counter <= counter + 32'b1;
-		end
 
-		case(counter)
-			OUTPUT_TIME_1:
-			OUTPUT_TIME_2:
-			OUTPUT_TIME_3:
-			OUTPUT_TIME_4:
-			OUTPUT_TIME_5:
-			begin o_random_out <= temp; end
-		endcase
+	always_ff @(posedge i_clk) begin
+		counter_r <= counter_w;
+		state_r <= state_w;
+		random_r <= random_w;
 	end
-
 endmodule

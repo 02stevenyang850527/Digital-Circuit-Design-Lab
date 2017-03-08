@@ -139,11 +139,13 @@ module DE2_115(
 	logic [3:0] random_value;
 	Debounce deb0(
 		.i_in(KEY[0]),
+		.i_rst(KEY[1]),
 		.i_clk(CLOCK_50),
 		.o_neg(keydown)
 	);
 	Top top0(
 		.i_clk(CLOCK_50),
+		.i_rst(KEY[1]),
 		.i_start(keydown),
 		.o_random_out(random_value)
 	);
@@ -158,6 +160,7 @@ module DE2_115(
 	assign HEX5 = '1;
 	assign HEX6 = '1;
 	assign HEX7 = '1;
+
 `ifdef DUT_LAB1
 	initial begin
 		$fsdbDumpfile("LAB1.fsdb");

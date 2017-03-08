@@ -36,9 +36,11 @@ def LAB1_test(dut):
 			app.processEvents()
 		keys[0] <= (not seven.buttons[0].isDown())
 		keys[1] <= (not seven.buttons[1].isDown())
+		keys[2] <= (not seven.buttons[2].isDown())
+		keys[3] <= (not seven.buttons[3].isDown())
 		yield SimClock(clk, CYCLE_PER_SLEEP, period)
 		for i, h in enumerate(seven.hexs):
 			h.updateString(hexs[i].value.binstr)
 		if not seven.isVisible():
-			return
+			break
 	seven.close()
