@@ -10,65 +10,62 @@ module Top(
 	parameter FREQ_HZ = 50000000;
 `endif
 
-	parameter MAX_VAL = 15;
-	parameter MIN_VAL = 0;
-
 	enum {IDLE, RUN} state_w, state_r;
 	logic [31:0] counter_w, counter_r;
-	logic [3:0] random_w, random_r;
-
-//	logic i_start_tmp;
-//	initial begin
-//		#5 i_start_tmp = 0;
-//		#5 i_start_tmp = 1;
-//		#5 i_start_tmp = 0;
-//		state_w = IDLE;
-//		$finish;
-//	end
+	logic [3:0]  random_w, random_r;
+	logic [31:0] random_seed_w, random_seed_r;
 
 	assign o_random_out = random_w;
 
 	always_comb begin
 
-		if (state_r == IDLE)
-			begin
-				random_w = random_r;
-				counter_w = 0;
-			end
-
-		else begin
-					counter_w = counter_r + 1;
-					case(counter_r)
-						50,
-						100,
-						150,
-						200,
-						250,
-						300,
-						500,
-						800,
-						1200,
-						1700,
-						2300,
-						3000,
-						3800,
-						4700: 	begin
-								random_w = $urandom_range(MAX_VAL,MIN_VAL);
+		if (state_r == IDLE) begin
+			random_w = random_r;
+			state_w = IDLE;
+			counter_w = 0;
+			random_seed_w = random_seed_r;
+		end else begin
+			counter_w = counter_r + 1;
+			case(counter_r)
+				 5000000,
+				10000000,
+				15000000,
+				20000000,
+				25000000,
+				30000000,
+				37000000,
+				46000000,
+				57000000,
+				70000000,
+				85000000,
+				102000000,
+				121000000,
+				142000000: 	begin
+									random_seed_w = random_seed_r * 16807 % 2147483647;
+									random_w = random_seed_r % 16;
+									state_w = state_r;
 								end
 
-						4750:	begin
-								state_w = IDLE;
-								counter_w = 0;
+				142000001:	begin
+									state_w = IDLE;
+									random_w = random_r;
+									random_seed_w = random_seed_r;
 								end
-						default: random_w = random_r;
+						default: begin
+									random_w = random_r;
+									state_w = state_r;
+									random_seed_w = random_seed_r;
+									end
 					endcase
 		end
 		if (i_start) begin
 			state_w = RUN;
 			counter_w = 0;
 		end
-
-	end
+/*		else begin 
+			state_w = state_r;
+		end
+*/	end
 
 
 	always_ff @(posedge i_clk or negedge i_rst) begin
@@ -76,11 +73,13 @@ module Top(
 			state_r <= IDLE;
 			random_r <= 0;
 			counter_r <= 0;
+			random_seed_r <= 32134;
 			end
 		else begin
 			counter_r <= counter_w;
 			state_r <= state_w;
 			random_r <= random_w;
+			random_seed_r <= random_seed_w;
 			end
 	end
 endmodule
