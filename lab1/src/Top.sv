@@ -42,7 +42,7 @@ module Top(
 				121000000,
 				142000000: 	begin
 									random_seed_w = random_seed_r * 16807 % 2147483647;
-									random_w = random_seed_r % 16;
+									random_w = random_seed_r[23:6] % 16;
 									state_w = state_r;
 								end
 
