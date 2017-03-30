@@ -30,7 +30,7 @@ A roll call machine which generates a random number range between 0 to 15 every 
 5. Change directory to sim/
 6. Type "make TEST=LAB1 TOPLEVEL=DE2_115 SV=1" to run GUI simulation
 
-# Notes
+## Notes
 
 By default the simulation runs 1000 cycles Verilog
 simulation and sleep 100ms.
