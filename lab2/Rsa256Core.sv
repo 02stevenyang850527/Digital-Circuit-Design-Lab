@@ -24,15 +24,17 @@ module Rsa256Core(
     logic         start_mont_1, start_mont_2;
     logic         finish_mont_1_w, finish_mont_2_w;
     logic         finish_mont_1_r, finish_mont_2_r;
+	logic [255:0] a_mont_1, a_mont_2;
+	logic [255:0] b_mont_1, b_mont_2;
 
 
     ModuloProduct modulo_product(
         .i_clk(i_clk),
         .i_rst(i_rst),
         .i_start(start_mod_prod),
-        .i_n({0,n_r}), // concat 1 bit to MSB since i_n [256:0]
-        .i_a({1,{256{1'b0}}}), // a = 2^256
-        .i_b({0,a_r}),
+        .i_n({1'b0,i_n}), // concat 1 bit to MSB since i_n [256:0]
+        .i_a({1'b1,{256{1'b0}}}), // a = 2^256
+        .i_b({1'b0,i_a}),
         .o_result(result_mod_prod),
         .o_finished(finish_mod_prod_r)
     );
@@ -131,6 +133,7 @@ module Rsa256Core(
                 state_r <= IDLE;
             end
         end
+	end
 endmodule
 
 
@@ -228,7 +231,7 @@ module ModuloProduct(
     output         o_finished
 );
 
-    enum {IDLE, RUN, IDLE} state_r, state_w;
+    enum  {IDLE, RUN, DONE} state_r, state_w;
     logic [256:0] b;
     logic [256:0] ans;
     logic [  8:0] k; // counter from 0 to 255
@@ -242,7 +245,8 @@ module ModuloProduct(
 
     always_comb begin
         state_w = state_r;
-        tmp_1 = ans + b;
+		
+		tmp_1 = ans + b;
         tmp_2 = (b << 1);
     end
 
@@ -256,8 +260,6 @@ module ModuloProduct(
             k <= 0;
             b <= i_b;
             ans <= 0;
-            tmp_1 <= 0;
-            tmp_2 <= 0;
             finished_r <= 0;
             result_r <= 0;
         end else begin
@@ -267,7 +269,7 @@ module ModuloProduct(
                     result_r <= ans[255:0];
                     finished_r <= 1;
                 end else begin
-                     k <= k + 1; // counter++
+                    k <= k + 1; // counter
 
                     // ans = (ans + b) mod n = tmp_1 mod n
                     if (i_a[k] == 1) begin
