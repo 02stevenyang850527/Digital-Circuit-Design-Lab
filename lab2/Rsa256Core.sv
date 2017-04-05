@@ -24,8 +24,8 @@ module Rsa256Core(
     logic         start_mont_1, start_mont_2;
     logic         finish_mont_1_w, finish_mont_2_w;
     logic         finish_mont_1_r, finish_mont_2_r;
-	logic [255:0] a_mont_1, a_mont_2;
-	logic [255:0] b_mont_1, b_mont_2;
+    logic [255:0] a_mont_1, a_mont_2;
+    logic [255:0] b_mont_1, b_mont_2;
 
 
     ModuloProduct modulo_product(
@@ -133,13 +133,13 @@ module Rsa256Core(
                 state_r <= IDLE;
             end
         end
-	end
+    end
 endmodule
 
 
 // calculating a x b x 2^(−256) mod N
 module Mongomery(
-	input  i_clk,
+    input  i_clk,
     input  i_rst,
     input  i_start,
     input  [255:0] i_a,
@@ -149,8 +149,8 @@ module Mongomery(
     output         o_finished
 );
 
-    enum {IDLE, RUN, DONE} state_w, state_r;
-    enum {STEP_1, STEP_2} state_mont;
+    enum  {IDLE, RUN, DONE} state_w, state_r;
+    enum  {STEP_1, STEP_2} state_mont;
     logic [255:0] ans;
     logic [255:0] result_w, result_r;
     logic         finished_w, finished_r;
@@ -246,7 +246,7 @@ module ModuloProduct(
     always_comb begin
         state_w = state_r;
         k_w = k_r + 1'b1;
-        if (state_w == RUN) begin 
+        if (state_r == RUN) begin 
             // ans = (ans + b) mod n = tmp_1 mod n
             if (i_a[k_r] == 1) begin
                 tmp_1 = ans_r + b_r;
