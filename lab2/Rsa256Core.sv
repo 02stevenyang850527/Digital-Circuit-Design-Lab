@@ -232,9 +232,9 @@ module ModuloProduct(
 );
 
     enum  {IDLE, RUN, DONE} state_r, state_w;
-    logic [256:0] b;
-    logic [256:0] ans;
-    logic [  8:0] k; // counter from 0 to 255
+    logic [256:0] b_w, b_r;
+    logic [256:0] ans_w, ans_r;
+    logic [  8:0] k_w, k_r; // counter from 0 to 255
     logic [256:0] tmp_1;
     logic [256:0] tmp_2;
     logic [255:0] result_r;
@@ -245,9 +245,28 @@ module ModuloProduct(
 
     always_comb begin
         state_w = state_r;
-		
-		tmp_1 = ans + b;
-        tmp_2 = (b << 1);
+        k_w = k_r + 1'b1;
+        if (state_w == RUN) begin 
+            // ans = (ans + b) mod n = tmp_1 mod n
+            if (i_a[k_r] == 1) begin
+                tmp_1 = ans_r + b_r;
+                if (tmp_1 >= i_n) begin
+                    ans_w = tmp_1 - i_n;
+                end else begin
+                    ans_w = tmp_1;
+                end
+            end else begin
+                // do nothing
+            end
+
+            // b = (b x 2) mod n = tmp_2 mod n
+            tmp_2 = (b_r << 1);
+            if (tmp_2 >= i_n) begin
+                b_w = tmp_2 - i_n;
+            end else begin
+                b_w = tmp_2;
+            end
+        end
     end
 
     always_ff @(posedge i_clk or posedge i_rst or posedge i_start) begin
@@ -257,37 +276,19 @@ module ModuloProduct(
             end else begin
                 state_r <= RUN;
             end
-            k <= 0;
-            b <= i_b;
-            ans <= 0;
+            k_r <= 0;
+            b_r <= i_b;
+            ans_r <= 0;
             finished_r <= 0;
             result_r <= 0;
         end else begin
             if (state_w == RUN) begin
                 if (k == 256) begin
                     state_r <= DONE;
-                    result_r <= ans[255:0];
-                    finished_r <= 1;
+                    result_r <= ans_w[255:0];
+                    finished_r <= 1'b1;
                 end else begin
-                    k <= k + 1; // counter
-
-                    // ans = (ans + b) mod n = tmp_1 mod n
-                    if (i_a[k] == 1) begin
-                        if (tmp_1 >= i_n) begin
-                            ans <= tmp_1 - i_n;
-                        end else begin
-                            ans <= tmp_1;
-                        end
-                    end else begin
-                        // do nothing
-                    end
-
-                    // b = (b x 2) mod n = tmp_2 mod n
-                    if (tmp_2 >= i_n) begin
-                        b <= tmp_2 - i_n;
-                    end else begin
-                        b <= tmp_2;
-                    end
+                    k_r <= k_w; // counter
                 end
             end else begin
                 if (state_w == DONE) begin
