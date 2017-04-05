@@ -12,39 +12,38 @@ module Rsa256Core(
 
     enum {IDLE, MOD_PROD, MONT, DONE} state_w, state_r;
 
-    logic [255:0] ans_r, ans_w, t;
-    logic [  8:0] k; // counter
-    logic         finished_w;
+    logic [255:0] ans_r, ans_w, t_w, t_r;
+    logic [  8:0] k_r, k_w; // counter
+    logic         finished_w, finished_r;
     
-    logic [255:0] result_mod_prod;
-    logic         start_mod_prod;
+    logic [255:0] result_mod_prod, result_mod;
+    logic         start_mod_prod_r, start_mod_prod_w;
     logic         finish_mod_prod;
 
     logic [255:0] result_mont_1, result_mont_2;
-    logic         start_mont_1, start_mont_2;
+    logic         start_mont_1_r, start_mont_1_w, start_mont_2_r, start_mont_w;
     logic         finish_mont_1_w, finish_mont_2_w;
     logic         finish_mont_1_r, finish_mont_2_r;
-    logic [255:0] a_mont_1, a_mont_2;
-    logic [255:0] b_mont_1, b_mont_2;
-
+	logic [255:0] a_mont_1_w, a_mont_1_r, a_mont_2_w, a_mont_2_r;
+	logic [255:0] b_mont_1_w, b_mont_1_r, b_mont_2_w, b_mont_2_r;
 
     ModuloProduct modulo_product(
         .i_clk(i_clk),
         .i_rst(i_rst),
-        .i_start(start_mod_prod),
+        .i_start(start_mod_prod_r),
         .i_n({1'b0,i_n}), // concat 1 bit to MSB since i_n [256:0]
         .i_a({1'b1,{256{1'b0}}}), // a = 2^256
         .i_b({1'b0,i_a}),
         .o_result(result_mod_prod),
-        .o_finished(finish_mod_prod_r)
+        .o_finished(finish_mod_prod)
     );
 
     Mongomery mongomery_1(
         .i_clk(i_clk),
         .i_rst(i_rst),
-        .i_start(start_mont_1),
-        .i_a(a_mont_1),
-        .i_b(b_mont_1),
+        .i_start(start_mont_1_r),
+        .i_a(a_mont_1_r),
+        .i_b(b_mont_1_r),
         .i_n(i_n),
         .o_result(result_mont_1),
         .o_finished(finish_mont_1_w)
@@ -53,85 +52,91 @@ module Rsa256Core(
     Mongomery mongomery_2(
         .i_clk(i_clk),
         .i_rst(i_rst),
-        .i_start(start_mont_2),
-        .i_a(a_mont_2),
-        .i_b(b_mont_2),
+        .i_start(start_mont_2_r),
+        .i_a(a_mont_2_r),
+        .i_b(b_mont_2_r),
         .i_n(i_n),
         .o_result(result_mont_2),
         .o_finished(finish_mont_2_w)
     );
 
-    assign o_finished = finished_w;
-    assign o_a_pow_e = ans_w;
+    assign o_finished = finished_r;
+    assign o_a_pow_e = ans_r;
 
     always_comb begin
         state_w = state_r;
-        if (state_w == IDLE || state_w == MOD_PROD || state_w == MONT) begin
-            finished_w = 0;
-            ans_w = 0;
-        end else begin // state_w == DONE
-            finished_w = 1;
-            ans_w = ans_r;
+        case (state_r)
+            IDLE: begin
+                finsihed_w = 0;
+                ans_w = 0;
+            end
+            MOD_PROD: begin
+                start_mod_prod_w = 1;
+                if (finish_mod_prod == 1) begin
+                    state_w = MONT;
+                    t_w = result_mod_prod;
+                end
+            end
+            MONT: begin
+                if (i_e[k_r] == 1) begin
+                    if (finish_mont_1_r == 1) begin
+                        ans_w = result_mont_1;
+                        start_mont_1_w = 0;
+                        finish_mont_1_w = 1;
+                    end else begin
+                        start_mont_1_w = 1;
+                        a_mont_1_w = ans_r;
+                        b_mont_1_w = t_r;
+                    end
+                end else begin
+                    finish_mont_1_w = 1;
+                end
+
+                if (finish_mont_2_r == 1) begin
+                    ans_w = result_mont_1;
+                    start_mont_1_w = 0;
+                    finish_mont_2_w = 1;
+                end else begin
+                    start_mont_1_w = 1;
+                    a_mont_1_w = ans_r;
+                    b_mont_1_w = t_r;
+                end
+
+                if (finish_mont_1_r && finish_mont_2_r) begin
+                    if (k_r == 256) begin
+                        state_w = DONE;
+                    end else begin
+                        k_w = k_r + 1;
+                    end
+                    finish_mont_1_w = 0;
+                    finish_mont_2_w = 0;
+                end
+            end
+            DONE: begin
+                state_w = IDLE;
+                finished_w = 0;
+                ans_w = ans_r;
+            end
+        endcase
+        
+        if (i_start) begin
+            state_w = MOD_PROD;
+            ans_w = 1;
+            k_w = 0;
+            finsih_mod_prod = 0;
         end
     end
 
-    always_ff @(posedge i_clk or posedge i_rst or posedge i_start) begin
+    always_ff @(posedge i_clk or posedge i_rst) begin
         if (i_rst) begin
             ans_r <= 1;
             state_r <= IDLE;
             finish_mod_prod <= 0;
-            k <= 0;
-        end else if (i_start) begin
-            ans_r <= 1;
-            state_r <= MOD_PROD;
-            finish_mod_prod <= 0;
-            k <= 0;
+            k_r <= 0;
         end else begin
-            if (state_w == IDLE) begin
-                // do nothing
-            end else if (state_w == MOD_PROD) begin
-                start_mod_prod <= 1;
-                if (finish_mod_prod == 1) begin
-                    state_r <= MONT;
-                    t <= result_mod_prod;
-                end
-            end else if (state_w == MONT) begin
-                if (i_e[k] == 1) begin
-                    if (finish_mont_1_w == 1) begin
-                        ans_r <= result_mont_1;
-                        start_mont_1 <= 0;
-                        finish_mont_1_r <= 1;
-                    end else begin
-                        start_mont_1 <= 1;
-                        a_mont_1 <= ans_r;
-                        b_mont_1 <= t;
-                    end
-                end else begin
-                    finish_mont_1_r <= 1;
-                end
-
-                if (finish_mont_2_w == 1) begin
-                    ans_r <= result_mont_1;
-                    start_mont_1 <= 0;
-                    finish_mont_2_r <= 1;
-                end else begin
-                    start_mont_1 <= 1;
-                    a_mont_1 <= ans_r;
-                    b_mont_1 <= t;
-                end
-
-                if (finish_mont_1_r && finish_mont_2_r) begin
-                    if (k == 256) begin
-                        state_r <= DONE;
-                    end else begin
-                        k <= k + 1;
-                    end
-                    finish_mont_1_r <= 0;
-                    finish_mont_2_r <= 0;
-                end
-            end else begin // state_w == DONE
-                state_r <= IDLE;
-            end
+            ans_r <= ans_w;
+            state_r <= state+w;
+            k_w <= k_r;
         end
     end
 endmodule
