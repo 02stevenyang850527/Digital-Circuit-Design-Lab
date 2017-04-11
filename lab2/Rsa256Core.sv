@@ -212,13 +212,15 @@ module Mongomery(
     enum  {IDLE, RUN, DONE} state_w, state_r;
     logic [257:0] result_w, result_r;
     logic [257:0] cal_w, cal_r;
-	logic [255:0] a_w, a_r, b_w, b_r, n_w, n_r;
+	 logic [255:0] a_w, a_r, b_w, b_r, n_w, n_r;
     logic [257:0] tmp_1, tmp_2;
     logic         finished_w, finished_r;
     logic [  8:0] counter_w, counter_r; // counter
 
     assign o_finished = finished_r;
     assign o_result = result_r[255:0];
+	 assign tmp_1 = (b_r[counter_r])? (cal_r + a_r) : cal_r;
+	 assign tmp_2 = (tmp_1 & 1)? (tmp_1 + n_r) : tmp_1;
 
     always_comb begin
         result_w = result_r;
@@ -226,9 +228,9 @@ module Mongomery(
         cal_w = cal_r;
         state_w = state_r;
         counter_w = counter_r;
-		a_w = a_r;
-		b_w = b_r;
-		n_w = n_r;
+		  a_w = a_r;
+		  b_w = b_r;
+		  n_w = n_r;
 
         case (state_r)
             IDLE:   begin
@@ -242,19 +244,7 @@ module Mongomery(
 						end
                     end
 
-            RUN:    begin
-                        if (b_r[counter_r]) begin
-                            tmp_1 = cal_r + a_r;
-                        end else begin
-                            tmp_1 = cal_r;
-                        end
-
-                        if (tmp_1 & 1) begin
-                            tmp_2 = tmp_1 + n_r;
-                        end else begin
-                            tmp_2 = tmp_1;
-                        end
-
+            RUN:    begin                      
                         cal_w = tmp_2 >> 1;
 
                         if (counter_r == 255) begin
@@ -323,7 +313,7 @@ module ModuloProduct(
 
     assign o_finished = finished_r;
     assign o_result = result_r[255:0];
-
+	 assign tmp_1 = cal_r << 1;
     always_comb begin
         result_w = result_r;
         finished_w = finished_r;
@@ -340,7 +330,6 @@ module ModuloProduct(
                     end
 
             RUN:    begin
-						tmp_1 = cal_r << 1;
                         if (tmp_1 >= i_n) begin
                             cal_w = tmp_1 - i_n;
                         end else begin
@@ -385,90 +374,3 @@ module ModuloProduct(
     end
 
 endmodule
-
-/*
-// calculate a x b mod n
-module ModuloProduct(
-    input  i_clk,
-    input  i_rst,
-    input  i_start,
-    input  [256:0] i_n,
-    input  [256:0] i_a,
-    input  [256:0] i_b,
-    output [255:0] o_result, // 256 bits only
-    output         o_finished
-);
-
-    enum  {IDLE, RUN, DONE} state_r, state_w;
-    logic [256:0] b_w, b_r;
-    logic [256:0] ans_w, ans_r;
-    logic [  8:0] k_w, k_r; // counter from 0 to 255
-    logic [256:0] tmp_1;
-    logic [256:0] tmp_2;
-    logic [255:0] result_r;
-    logic finished_r;
-
-    assign o_finished = finished_r;
-    assign o_result = result_r;
-
-    always_comb begin
-        state_w = state_r;
-        k_w = k_r + 1'b1;
-		b_w = b_r;
-		ans_w = ans_r;
-
-        if (state_r == RUN) begin 
-            // ans = (ans + b) mod n = tmp_1 mod n
-            if (i_a[k_r] == 1) begin
-                tmp_1 = ans_r + b_r;
-                if (tmp_1 >= i_n) begin
-                    ans_w = tmp_1 - i_n;
-                end else begin
-                    ans_w = tmp_1;
-                end
-            end else begin
-                // do nothing
-            end
-
-            // b = (b x 2) mod n = tmp_2 mod n
-            tmp_2 = (b_r << 1);
-            if (tmp_2 >= i_n) begin
-                b_w = tmp_2 - i_n;
-            end else begin
-                b_w = tmp_2;
-            end
-        end
-    end
-
-    always_ff @(posedge i_clk or posedge i_rst or posedge i_start) begin
-        if (i_rst || i_start) begin
-            if (i_rst) begin 
-                state_r <= IDLE;
-            end else begin
-                state_r <= RUN;
-            end
-            k_r <= 0;
-            b_r <= i_b;
-            ans_r <= 1;
-            finished_r <= 0;
-            result_r <= 0;
-        end else begin
-            if (state_w == RUN) begin
-                if (k_w == 256) begin
-                    state_r <= DONE;
-                    result_r <= ans_w[255:0];
-                    finished_r <= 1'b1;
-                end else begin
-                    k_r <= k_w; // counter
-                end
-            end else begin
-                if (state_w == DONE) begin
-                    state_r <= IDLE;
-                end
-                finished_r <= 0;
-                result_r <= 0;
-            end
-        end
-    end
-endmodule
-*/
