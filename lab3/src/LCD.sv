@@ -61,83 +61,80 @@ enum {SUB_1, SUB_2, SUB_3, SUB_4, SUB_5, SUB_6, SUB_7, SUB_8} substate_w, substa
 //=======================================================
 
 always_comb begin
-  state_w          = state_r;
-  substate_w       = substate_r;
-  timer_w          = timer_r + 1;
-  flag_timer_rst_w = flag_timer_rst_r;
+
 end
 
-always_ff @(posedge i_clk) begin
-  if (flag_timer_rst_w) begin
-    timer_r      <= 20'b0;
-    flag_39us    <= 1'b0;
-    flag_43us    <= 1'b0;
-    flag_100us   <= 1'b0;
-    flag_4100us  <= 1'b0;
-    flag_15000us <= 1'b0;
+always_comb begin
+  if (flag_timer_rst_r) begin
+    timer_w      = 20'b0;
+    flag_39us    = 1'b0;
+    flag_43us    = 1'b0;
+    flag_100us   = 1'b0;
+    flag_4100us  = 1'b0;
+    flag_15000us = 1'b0;
   end else begin
-    timer_r <= timer_w;
+    timer_w = timer_r + 1;
 
-    if (timer_w >= t_39us) begin
-      flag_39us <= 1'b1;
+    if (timer_r >= t_39us) begin
+      flag_39us = 1'b1;
     end else begin
-      flag_39us <= flag_39us;
+      flag_39us = flag_39us;
     end
 
-    if (timer_w >= t_43us) begin
-      flag_43us <= 1'b1;
+    if (timer_r >= t_43us) begin
+      flag_43us = 1'b1;
     end else begin
-      flag_43us <= flag_43us;
+      flag_43us = flag_43us;
     end
 
-    if (timer_w >= t_100us) begin
-      flag_100us <= 1'b1;
+    if (timer_r >= t_100us) begin
+      flag_100us = 1'b1;
     end else begin
-      flag_100us <= flag_100us;
+      flag_100us = flag_100us;
     end
 
-    if (timer_w >= t_4100us) begin
-      flag_4100us <= 1'b1;
+    if (timer_r >= t_4100us) begin
+      flag_4100us = 1'b1;
     end else begin
-      flag_4100us <= flag_4100us;
+      flag_4100us = flag_4100us;
     end
 
-    if (timer_w >= t_15000us) begin
-      flag_15000us <= 1'b1;
+    if (timer_r >= t_15000us) begin
+      flag_15000us = 1'b1;
     end else begin
-      flag_15000us <= flag_15000us;
+      flag_15000us = flag_15000us;
     end
   end
 end
 
 
-always_ff @(posedge i_clk) begin
-  case(state_w)
+always_comb begin
+  case(state_r)
     INIT: begin
-      case(substate_w)
+      case(substate_r)
         SUB_1: begin // wait 15ms after Vcc rises to 4.5V
-          LCD_DATA <= 8'b0;
-          LCD_EN   <= 1'b0;
-          LCD_RW   <= 1'b0;
-          LCD_RS   <= 1'b0;
-          LCD_ON   <= 1'b0;
-          READY    <= 1'b0;
+          LCD_DATA = 8'b0;
+          LCD_EN   = 1'b0;
+          LCD_RW   = 1'b0;
+          LCD_RS   = 1'b0;
+          LCD_ON   = 1'b0;
+          READY    = 1'b0;
           if (!flag_15000us) begin
-            substate_r <= substate_w;
-            flag_timer_rst_r <= 1'b0;
+            substate_w = substate_r;
+            flag_timer_rst_w = 1'b0;
           end else begin
-            substate_r <= SUB_2;
-            flag_timer_rst_r <= 1'b1;
+            substate_w = SUB_2;
+            flag_timer_rst_w = 1'b1;
           end
         end
 
         SUB_2: begin // wait for more than 4.1ms
-          LCD_DATA <= FUNCT_SET;
-          LCD_EN   <= 1'b0;
-          LCD_RW   <= 1'b0;
-          LCD_RS   <= 1'b0;
-          LCD_ON   <= 1'b0;
-          READY    <= 1'b0;
+          LCD_DATA = FUNCT_SET;
+          LCD_EN   = 1'b0;
+          LCD_RW   = 1'b0;
+          LCD_RS   = 1'b0;
+          LCD_ON   = 1'b0;
+          READY    = 1'b0;
         end
 
         SUB_3: begin
@@ -177,9 +174,15 @@ end
 
 always_ff @(posedge i_clk or posedge i_rst) begin
   if (i_rst) begin
-    state_r        <= INIT;
-    substate_r     <= SUB_1;
+    timer_r          <= 10'b0
+    state_r          <= INIT;
+    substate_r       <= SUB_1;
     flag_timer_rst_r <= 1'b1;
+  end else begin
+    timer_r          <= timer_w;
+    state_r          <= state_w;
+    substate_r       <= substate_w;
+    flag_timer_rst_r <= flag_timer_rst_w;
   end
 end
 
