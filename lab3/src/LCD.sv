@@ -3,15 +3,23 @@
 module LCD(
   input        i_clk,
   input        i_rst,
+  // LCD module connection
   inout  [7:0] LCD_DATA,
   output       LCD_EN,
   output       LCD_RW,
   output       LCD_RS,
   output       LCD_ON,
   output       LCD_BLON,
-
+  // self designed inout
   output       READY
 );
+
+//=======================================================
+//-----------------Default Assumption--------------------
+//=======================================================
+
+// LCD modules used on DE2-115 boards do not have backlight.
+assign LCD_BLON = 1'b0;
 
 //=======================================================
 //------------Define Basic Instruction Set---------------
@@ -33,8 +41,8 @@ parameter [19:0] t_4100us   = 48810;    //4.1ms     ~= 48810  clks
 parameter [19:0] t_15000us  = 178572;   //15ms      ~= 178572 clks
 
 // time counter
-logic [19:0] timer;
-logic flag_timer_rst;
+logic [19:0] timer_w, timer_r;
+logic flag_timer_rst_w, flag_timer_rst_r;
 logic flag_39us;
 logic flag_43us;
 logic flag_100us;
@@ -46,49 +54,55 @@ logic flag_15000us;
 //=======================================================
 
 enum {INIT, IDLE, RECORD, STOP, PLAY, PAUSE} state_w, state_r;
-enum {INIT_1, INIT_2, INIT_3, INIT_4, INIT_5, INIT_6, INIT_7, INIT_8} init_state_w, init_state_r;
-
+enum {SUB_1, SUB_2, SUB_3, SUB_4, SUB_5, SUB_6, SUB_7, SUB_8} substate_w, substate_r;
 
 //=======================================================
 //--------------------Time Counter-----------------------
 //=======================================================
 
+always_comb begin
+  state_w          = state_r;
+  substate_w       = substate_r;
+  timer_w          = timer_r + 1;
+  flag_timer_rst_w = flag_timer_rst_r;
+end
+
 always_ff @(posedge i_clk) begin
-  if (flag_timer_rst) begin
-    timer        <= 20'b0;
+  if (flag_timer_rst_w) begin
+    timer_r      <= 20'b0;
     flag_39us    <= 1'b0;
     flag_43us    <= 1'b0;
     flag_100us   <= 1'b0;
     flag_4100us  <= 1'b0;
     flag_15000us <= 1'b0;
   end else begin
-    timer <= timer + 1;
+    timer_r <= timer_w;
 
-    if (timer >= t_39us) begin
+    if (timer_w >= t_39us) begin
       flag_39us <= 1'b1;
     end else begin
       flag_39us <= flag_39us;
     end
 
-    if (timer >= t_43us) begin
+    if (timer_w >= t_43us) begin
       flag_43us <= 1'b1;
     end else begin
       flag_43us <= flag_43us;
     end
 
-    if (timer >= t_100us) begin
+    if (timer_w >= t_100us) begin
       flag_100us <= 1'b1;
     end else begin
       flag_100us <= flag_100us;
     end
 
-    if (timer >= t_4100us) begin
+    if (timer_w >= t_4100us) begin
       flag_4100us <= 1'b1;
     end else begin
       flag_4100us <= flag_4100us;
     end
 
-    if (timer >= t_15000us) begin
+    if (timer_w >= t_15000us) begin
       flag_15000us <= 1'b1;
     end else begin
       flag_15000us <= flag_15000us;
@@ -97,25 +111,51 @@ always_ff @(posedge i_clk) begin
 end
 
 
-always_comb begin
-  case(state_r)
+always_ff @(posedge i_clk) begin
+  case(state_w)
     INIT: begin
-      case(init_state_r)
-        INIT_1: begin
+      case(substate_w)
+        SUB_1: begin // wait 15ms after Vcc rises to 4.5V
+          LCD_DATA <= 8'b0;
+          LCD_EN   <= 1'b0;
+          LCD_RW   <= 1'b0;
+          LCD_RS   <= 1'b0;
+          LCD_ON   <= 1'b0;
+          READY    <= 1'b0;
+          if (!flag_15000us) begin
+            substate_r <= substate_w;
+            flag_timer_rst_r <= 1'b0;
+          end else begin
+            substate_r <= SUB_2;
+            flag_timer_rst_r <= 1'b1;
+          end
         end
-        INIT_2: begin
+
+        SUB_2: begin // wait for more than 4.1ms
+          LCD_DATA <= FUNCT_SET;
+          LCD_EN   <= 1'b0;
+          LCD_RW   <= 1'b0;
+          LCD_RS   <= 1'b0;
+          LCD_ON   <= 1'b0;
+          READY    <= 1'b0;
         end
-        INIT_3: begin
+
+        SUB_3: begin
         end
-        INIT_4: begin
+
+        SUB_4: begin
         end
-        INIT_5: begin
+
+        SUB_5: begin
         end
-        INIT_6: begin
+
+        SUB_6: begin
         end
-        INIT_7: begin
+
+        SUB_7: begin
         end
-        INIT_8: begin
+
+        SUB_8: begin
         end
     end
 
@@ -137,9 +177,9 @@ end
 
 always_ff @(posedge i_clk or posedge i_rst) begin
   if (i_rst) begin
-    state_r      <= INIT;
-    init_state_r <= INIT_1;
-    flag_timer_rst <= 1'b1;
+    state_r        <= INIT;
+    substate_r     <= SUB_1;
+    flag_timer_rst_r <= 1'b1;
   end
 end
 
