@@ -62,6 +62,7 @@ logic flag_15000us;
 // LCD Module States
 enum {INIT, IDLE, RECORD, STOP, PLAY, PAUSE} state_w, state_r;
 enum {SUB_1, SUB_2, SUB_3, SUB_4, SUB_5, SUB_6, SUB_7, SUB_8} substate_w, substate_r;
+enum {SHOW_NOTHING, SHOW_READY, SHOW_RECORD, SHOW_STOP, SHOW_PLAY, SHOW_PAUSE} show_state_w, show_state_r;
 
 // INPUT_STATE ( input from Top module in Top.sv )
 parameter [2:0] INPUT_INIT   = 3'b000;
@@ -130,9 +131,9 @@ end
 //--------------------State Machine----------------------
 //=======================================================
 
-
 always_comb begin
   case(state_r)
+//------------------------INIT---------------------------
     INIT: begin
       case(substate_r)
         SUB_1: begin // wait 15ms after Vcc rises to 4.5V
@@ -240,35 +241,82 @@ always_comb begin
           end
         end
 
-        SUB_8: begin
+        SUB_8: begin // goto state IDLE
           LCD_DATA = ZERO;
           LCD_EN   = 1'b0;
           LCD_RW   = 1'b0;
           LCD_RS   = 1'b0;
-          READY    = 1'b1;
-
+          READY    = 1'b0;
+          state_w  = IDLE;
+          substate_w = SUB_1;
+          flag_timer_rst_w = 1'b1;
         end
+      endcase
     end
 
+//------------------------IDLE---------------------------
     IDLE: begin
+      READY = 1'b1;
+      case(INPUT_STATE)
+        INPUT_INIT: begin
+          state_w          <= INIT;
+          substate_w       <= SUB_1;
+          flag_timer_rst_w <= 1'b1;
+        end
+
+        INPUT_IDLE: begin
+          state_w          <= state_r;
+          substate_w       <= substate_r;
+          flag_timer_rst_w <= flag_timer_rst_r;
+        end
+
+        INPUT_RECORD: begin
+          state_w          <= RECORD;
+          substate_w       <= SUB_1;
+          flag_timer_rst_w <= 1'b1;
+        end
+
+        INPUT_STOP: begin
+          state_w          <= STOP;
+          substate_w       <= SUB_1;
+          flag_timer_rst_w <= 1'b1;
+        end
+
+        INPUT_PLAY: begin
+          state_w          <= PLAY;
+          substate_w       <= SUB_1;
+          flag_timer_rst_w <= 1'b1;
+        end
+
+        INPUT_PAUSE: begin
+          state_w          <= PAUSE;
+          substate_w       <= SUB_1;
+          flag_timer_rst_w <= 1'b1;
+        end
+      endcase
     end
 
+//-----------------------RECORD--------------------------
     RECORD: begin
     end
-    
+//------------------------STOP---------------------------
+   
     STOP: begin
     end
+//------------------------PLAY---------------------------
     
     PLAY: begin
     end
+//-----------------------PAUSE---------------------------
     
     PAUSE: begin
     end
+  endcase
 end
 
 always_ff @(posedge i_clk or posedge i_rst) begin
   if (i_rst) begin
-    timer_r          <= 10'b0
+    timer_r          <= 10'b0;
     state_r          <= INIT;
     substate_r       <= SUB_1;
     flag_timer_rst_r <= 1'b1;
