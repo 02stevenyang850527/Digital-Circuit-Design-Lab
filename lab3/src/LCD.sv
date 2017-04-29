@@ -263,11 +263,13 @@ always_comb begin
 
 //------------------------IDLE---------------------------
     IDLE: begin
-      READY = 1'b1;
+      READY    = 1'b1;
       LCD_DATA = ZERO;
       LCD_EN   = 1'b0;
       LCD_RW   = 1'b0;
       LCD_RS   = 1'b0;
+      lcd_index_w = 6'b0;
+
       case(INPUT_STATE)
         INPUT_INIT: begin
           state_w          = INIT;
@@ -351,16 +353,148 @@ always_comb begin
     end
 //------------------------STOP--------------------------- 
     STOP: begin
+      READY  = 1'b0;
+      LCD_RS = 1'b1;
+      LCD_RW = 1'b0;
+      if (INPUT_STATE == INPUT_RECORD) begin
+        // delay for each input
+        if (!flag_43us) begin
+          flag_timer_rst_w = 1'b0;
+          lcd_index_w = lcd_index_r;
+          if (lcd_index_r >= 4) begin // finish
+            LCD_EN = 1'b0;
+          end else begin
+            LCD_EN = 1'b1;
+          end
+        end else begin
+          flag_timer_rst_w = 1'b1;
+          if (lcd_index_r >= 4) begin // finish
+            lcd_index_w = lcd_index_r;
+          end else begin
+            lcd_index_w = lcd_index_r + 1;
+          end
+          LCD_EN = 1'b0;
+        end
+        // input characters
+        case(lcd_index_r)
+          0: LCD_DATA = 8'b01010011; // S
+          1: LCD_DATA = 8'b01010100; // T
+          2: LCD_DATA = 8'b01001111; // O
+          3: LCD_DATA = 8'b01010000; // P
+          default:  LCD_DATA = ZERO;
+        endcase
+      end else begin
+        LCD_EN = 1'b0;
+        LCD_DATA = 8'b0;
+        state_w = CLEAR;
+        substate_w = SUB_1;
+        flag_timer_rst_w = 1'b1;
+      end
     end
 //------------------------PLAY---------------------------
     PLAY: begin
+      READY  = 1'b0;
+      LCD_RS = 1'b1;
+      LCD_RW = 1'b0;
+      if (INPUT_STATE == INPUT_RECORD) begin
+        // delay for each input
+        if (!flag_43us) begin
+          flag_timer_rst_w = 1'b0;
+          lcd_index_w = lcd_index_r;
+          if (lcd_index_r >= 4) begin // finish
+            LCD_EN = 1'b0;
+          end else begin
+            LCD_EN = 1'b1;
+          end
+        end else begin
+          flag_timer_rst_w = 1'b1;
+          if (lcd_index_r >= 4) begin // finish
+            lcd_index_w = lcd_index_r;
+          end else begin
+            lcd_index_w = lcd_index_r + 1;
+          end
+          LCD_EN = 1'b0;
+        end
+        // input characters
+        case(lcd_index_r)
+          0: LCD_DATA = 8'b01010000; // P
+          1: LCD_DATA = 8'b01001100; // L
+          2: LCD_DATA = 8'b01000001; // A
+          3: LCD_DATA = 8'b01011001; // Y
+          default:  LCD_DATA = ZERO;
+        endcase
+      end else begin
+        LCD_EN = 1'b0;
+        LCD_DATA = 8'b0;
+        state_w = CLEAR;
+        substate_w = SUB_1;
+        flag_timer_rst_w = 1'b1;
+      end
     end
 //-----------------------PAUSE---------------------------
     PAUSE: begin
+      READY  = 1'b0;
+      LCD_RS = 1'b1;
+      LCD_RW = 1'b0;
+      if (INPUT_STATE == INPUT_RECORD) begin
+        // delay for each input
+        if (!flag_43us) begin
+          flag_timer_rst_w = 1'b0;
+          lcd_index_w = lcd_index_r;
+          if (lcd_index_r >= 5) begin // finish
+            LCD_EN = 1'b0;
+          end else begin
+            LCD_EN = 1'b1;
+          end
+        end else begin
+          flag_timer_rst_w = 1'b1;
+          if (lcd_index_r >= 5) begin // finish
+            lcd_index_w = lcd_index_r;
+          end else begin
+            lcd_index_w = lcd_index_r + 1;
+          end
+          LCD_EN = 1'b0;
+        end
+        // input characters
+        case(lcd_index_r)
+          0: LCD_DATA = 8'b01010000; // P
+          1: LCD_DATA = 8'b01000001; // A
+          2: LCD_DATA = 8'b01000011; // C
+          3: LCD_DATA = 8'b01010101; // U
+          4: LCD_DATA = 8'b01000010; // E
+          default:  LCD_DATA = ZERO;
+        endcase
+      end else begin
+        LCD_EN = 1'b0;
+        LCD_DATA = 8'b0;
+        state_w = CLEAR;
+        substate_w = SUB_1;
+        flag_timer_rst_w = 1'b1;
+      end
     end
 
     CLEAR: begin
-    lcd_index_w = 6'b0;
+      // state
+      if (substate_r==SUB_1) begin
+        state_w = state_r;
+      end else begin
+        state_w = IDLE;
+      end
+      // clear LCD display
+      LCD_DATA = CLEAR;
+      LCD_EN   = 1'b0;
+      LCD_RW   = 1'b0;
+      LCD_RS   = 1'b0;
+      READY    = 1'b0;
+      lcd_index_w = 6'b0;
+      // delay for 1.53ms
+      if (!flag_1530us) begin
+        substate_w = substate_r;
+        flag_timer_rst_w = 1'b0;
+      end else begin
+        substate_w = SUB_2;
+        flag_timer_rst_w = 1'b1;
+      end
   endcase
 end
 
@@ -379,7 +513,4 @@ always_ff @(posedge i_clk or posedge i_rst) begin
     lcd_index_r      <= lcd_index_w;
   end
 end
-
-
-
 endmodule
