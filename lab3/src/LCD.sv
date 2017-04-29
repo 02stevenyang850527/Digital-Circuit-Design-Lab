@@ -66,7 +66,7 @@ logic flag_15000us;
 //=======================================================
 
 // LCD Module States
-enum {INIT, IDLE, RECORD, STOP, PLAY, PAUSE} state_w, state_r;
+enum {INIT, IDLE, RECORD, STOP, PLAY, PAUSE, CLEAR} state_w, state_r;
 enum {SUB_1, SUB_2, SUB_3, SUB_4, SUB_5, SUB_6, SUB_7, SUB_8} substate_w, substate_r;
 
 // INPUT_STATE ( input from Top module in Top.sv )
