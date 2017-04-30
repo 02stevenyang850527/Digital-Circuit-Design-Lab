@@ -11,7 +11,7 @@ module LCD(
   output       LCD_ON,
   output       LCD_BLON,
   // self designed inout
-  input        INPUT_STATE,
+  input  [2:0] INPUT_STATE,
   output       READY
 );
 
