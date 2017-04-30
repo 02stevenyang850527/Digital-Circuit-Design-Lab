@@ -356,7 +356,7 @@ always_comb begin
       READY  = 1'b0;
       LCD_RS = 1'b1;
       LCD_RW = 1'b0;
-      if (INPUT_STATE == INPUT_RECORD) begin
+      if (INPUT_STATE == INPUT_STOP) begin
         // delay for each input
         if (!flag_43us) begin
           flag_timer_rst_w = 1'b0;
@@ -396,7 +396,7 @@ always_comb begin
       READY  = 1'b0;
       LCD_RS = 1'b1;
       LCD_RW = 1'b0;
-      if (INPUT_STATE == INPUT_RECORD) begin
+      if (INPUT_STATE == INPUT_PLAY) begin
         // delay for each input
         if (!flag_43us) begin
           flag_timer_rst_w = 1'b0;
@@ -436,7 +436,7 @@ always_comb begin
       READY  = 1'b0;
       LCD_RS = 1'b1;
       LCD_RW = 1'b0;
-      if (INPUT_STATE == INPUT_RECORD) begin
+      if (INPUT_STATE == INPUT_PAUSE) begin
         // delay for each input
         if (!flag_43us) begin
           flag_timer_rst_w = 1'b0;
