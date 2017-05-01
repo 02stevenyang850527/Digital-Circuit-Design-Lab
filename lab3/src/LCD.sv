@@ -1,4 +1,3 @@
-
 // CLOCK: 12MHz => 83.33 ns ~= 84 ns
 module LCD(
   input        i_clk,
@@ -61,12 +60,19 @@ logic flag_1530us;
 logic flag_4100us;
 logic flag_15000us;
 
+assign flag_39us = (timer_r >= t_39us);
+assign flag_43us = (timer_r >= t_43us);
+assign flag_100us = (timer_r >= t_100us);
+assign flag_1530us = (timer_r >= t_1530us);
+assign flag_4100us = (timer_r >= t_4100us);
+assign flag_15000us = (timer_r >= t_15000us);
+
 //=======================================================
 //-------------------Define States-----------------------
 //=======================================================
 
 // LCD Module States
-enum {INIT, IDLE, RECORD, STOP, PLAY, PAUSE, CLEAR} state_w, state_r;
+enum {INIT, IDLE, RECORD, STOP, PLAY, PAUSE, S_CLEAR} state_w, state_r;
 enum {SUB_1, SUB_2, SUB_3, SUB_4, SUB_5, SUB_6, SUB_7, SUB_8} substate_w, substate_r;
 
 // INPUT_STATE ( input from Top module in Top.sv )
@@ -83,53 +89,7 @@ parameter [2:0] INPUT_PAUSE  = 3'b101;
 //=======================================================
 
 always_comb begin
-  if (flag_timer_rst_r) begin
-    timer_w      = 20'b0;
-    flag_39us    = 1'b0;
-    flag_43us    = 1'b0;
-    flag_100us   = 1'b0;
-    flag_1530us  = 1'b0;
-    flag_4100us  = 1'b0;
-    flag_15000us = 1'b0;
-  end else begin
-    timer_w = timer_r + 1;
 
-    if (timer_r >= t_39us) begin
-      flag_39us = 1'b1;
-    end else begin
-      flag_39us = flag_39us;
-    end
-
-    if (timer_r >= t_43us) begin
-      flag_43us = 1'b1;
-    end else begin
-      flag_43us = flag_43us;
-    end
-
-    if (timer_r >= t_100us) begin
-      flag_100us = 1'b1;
-    end else begin
-      flag_100us = flag_100us;
-    end
-
-    if (timer_r >= t_1530us) begin
-      flag_1530us = 1'b1;
-    end else begin
-      flag_1530us = flag_1530us;
-    end
-
-    if (timer_r >= t_4100us) begin
-      flag_4100us = 1'b1;
-    end else begin
-      flag_4100us = flag_4100us;
-    end
-
-    if (timer_r >= t_15000us) begin
-      flag_15000us = 1'b1;
-    end else begin
-      flag_15000us = flag_15000us;
-    end
-  end
 end
 
 //=======================================================
@@ -137,6 +97,17 @@ end
 //=======================================================
 
 always_comb begin
+  state_w = state_r;
+  substate_w = substate_r;
+  flag_timer_rst_w = flag_timer_rst_r;
+  lcd_index_w = lcd_index_r;
+
+  if (flag_timer_rst_r) begin
+    timer_w = 20'b0;
+  end else begin
+    timer_w = timer_r + 1;
+  end
+  
   case(state_r)
 //------------------------INIT---------------------------
     INIT: begin
@@ -251,15 +222,22 @@ always_comb begin
           LCD_EN   = 1'b0;
           LCD_RW   = 1'b0;
           LCD_RS   = 1'b0;
-          READY    = 1'b0;
-          state_w  = IDLE;
-          substate_w = SUB_1;
+          if (INPUT_STATE != INPUT_INIT) begin
+            state_w = RECORD;
+            substate_w = SUB_1;
+            READY    = 1'b0;
+          end else begin
+            state_w  = state_r;
+            substate_w = substate_r;
+            READY = 1'b1;
+          end
           flag_timer_rst_w = 1'b1;
+			 lcd_index_w = 0;
         end
       endcase
     end
     // init lcd index
-    lcd_index_w = 6'b0;
+
 
 //------------------------IDLE---------------------------
     IDLE: begin
@@ -346,7 +324,7 @@ always_comb begin
       end else begin
         LCD_EN = 1'b0;
         LCD_DATA = 8'b0;
-        state_w = CLEAR;
+        state_w = S_CLEAR;
         substate_w = SUB_1;
         flag_timer_rst_w = 1'b1;
       end
@@ -386,7 +364,7 @@ always_comb begin
       end else begin
         LCD_EN = 1'b0;
         LCD_DATA = 8'b0;
-        state_w = CLEAR;
+        state_w = S_CLEAR;
         substate_w = SUB_1;
         flag_timer_rst_w = 1'b1;
       end
@@ -426,7 +404,7 @@ always_comb begin
       end else begin
         LCD_EN = 1'b0;
         LCD_DATA = 8'b0;
-        state_w = CLEAR;
+        state_w = S_CLEAR;
         substate_w = SUB_1;
         flag_timer_rst_w = 1'b1;
       end
@@ -467,13 +445,13 @@ always_comb begin
       end else begin
         LCD_EN = 1'b0;
         LCD_DATA = 8'b0;
-        state_w = CLEAR;
+        state_w = S_CLEAR;
         substate_w = SUB_1;
         flag_timer_rst_w = 1'b1;
       end
     end
 
-    CLEAR: begin
+    S_CLEAR: begin
       // state
       if (substate_r==SUB_1) begin
         state_w = state_r;
@@ -495,6 +473,7 @@ always_comb begin
         substate_w = SUB_2;
         flag_timer_rst_w = 1'b1;
       end
+	end
   endcase
 end
 
