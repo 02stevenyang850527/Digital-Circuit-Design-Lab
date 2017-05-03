@@ -15,7 +15,7 @@ module I2Csender (
 
     logic  [1:0] state_r, state_w;
     logic  [1:0] clk_cnt_r, clk_cnt_w;
-    logic  [2:0] bit_cnt_r, bit_cnt_w;
+    logic  [3:0] bit_cnt_r, bit_cnt_w;
     logic  [1:0] byte_cnt_r, byte_cnt_w;
     logic        scl_r, scl_w;
     logic        oe_r, oe_w;
@@ -41,7 +41,7 @@ module I2Csender (
         case (state_r)
             S_START:
             begin
-                if (i_stat) begin
+                if (i_start) begin
                     o_bit_w = 0;
                     clk_cnt_w = 0;
                     bit_cnt_w = 0;
@@ -82,7 +82,7 @@ module I2Csender (
                         oe_w = 1;
                         bit_cnt_w = 0;
                         i_data_w = i_data_r << 1;
-                        o_bit_w = i_data_r[23]
+                        o_bit_w = i_data_r[23];
                     end else if (bit_cnt_r == 8 && byte_cnt_r == 2) begin
                         oe_w = 1;
                         o_bit_w = 0;

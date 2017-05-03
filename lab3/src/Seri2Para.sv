@@ -4,11 +4,11 @@ module Seri2Para (
     input         i_start,
     input         aud_adcdat,
     output        o_finished,
-    output [15:0] sram_dq;
+    output [15:0] sram_dq
 );
 
-    localparam IDLE = 1;
-    localparam RUN = 2;
+    localparam IDLE = 0;
+    localparam RUN = 1;
     logic state_w, state_r, finished_r, finished_w;
     logic [4:0] count_w, count_r;
     logic [15:0] data_r, data_w;
@@ -25,6 +25,7 @@ module Seri2Para (
         case(state_r)
             IDLE:
             begin
+                finished_w = 1'b0;
                 if (i_start) begin
                     state_w = RUN;
                     count_w = 0;
@@ -46,7 +47,7 @@ module Seri2Para (
         endcase
     end
 
-    always_ff @(posedge i_clk or posedge i_rst)
+    always_ff @(posedge i_clk or posedge i_rst) begin
         if (i_rst) begin
             count_r    <= 0;
             finished_r <= 0;
