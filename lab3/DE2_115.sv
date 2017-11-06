@@ -135,42 +135,81 @@ module DE2_115(
 	output [16:0] HSMC_TX_D_P,
 	inout [6:0] EX_IO
 );
-	top top(
-		.i_clk(CLOCK_50),
-		.i_reset(KEY[0]),
-		.uart_0_external_connection_rxd(UART_RXD),
-		.uart_0_external_connection_txd(UART_TXD)
+
+	logic clk12M, clk32k;
+	logic locked;
+	logic key0, key1, key2, key3;
+
+	my_pll pll0(
+		.inclk0(CLOCK_50),
+		.c0(AUD_XCK),   // 12 MHz
+		.c1(clk100k)	// 100 kHz
 	);
 
+	Debounce deb0(
+		.i_in(KEY[0]),
+		.i_clk(AUD_BCLK),
+		.o_neg(key0)
+	);
+	Debounce deb1(
+		.i_in(KEY[1]),
+		.i_clk(AUD_BCLK),
+		.o_neg(key1)
+	);
+	Debounce deb2(
+		.i_in(KEY[2]),
+		.i_clk(AUD_BCLK),
+		.o_neg(key2)
+	);
+	Debounce deb3(
+		.i_in(KEY[3]),
+		.i_clk(AUD_BCLK),
+		.o_neg(key3)
+	);
 
-/*****  Audio signals  *****\
-	output I2C_SCLK,
-	inout I2C_SDAT,
-	input AUD_ADCDAT,
-	inout AUD_ADCLRCK,
-	inout AUD_BCLK,
-	output AUD_DACDAT,
-	inout AUD_DACLRCK,
-	output AUD_XCK,
-\***************************/
+	top top(
+		.i_clk(AUD_BCLK),
+		.i_clk2(clk100k),
+		.i_rst(SW[2]),
+		.i_play(key0),
+		.i_stop(key1),
+		.i_speed_up(key2),
+		.i_speed_down(key3),	
+		.i_mode(SW[0]),		
+		.i_interpol(SW[1]),	
+//		.LEDG(LEDG),
+		.LEDR(LEDR),
 
-/******  sRAM signals  ******\
-	output [19:0] SRAM_ADDR,
-	output SRAM_CE_N,
-	inout [15:0] SRAM_DQ,
-	output SRAM_LB_N,
-	output SRAM_OE_N,
-	output SRAM_UB_N,
-	output SRAM_WE_N,
-\****************************/
+		.o_SRAM_ADDR(SRAM_ADDR),
+		.o_SRAM_CE_N(SRAM_CE_N),
+		.SRAM_DQ(SRAM_DQ),
+		.o_SRAM_LB_N(SRAM_LB_N),
+		.o_SRAM_OE_N(SRAM_OE_N),
+		.o_SRAM_UB_N(SRAM_UB_N),
+		.o_SRAM_WE_N(SRAM_WE_N),
 
-/******  LCD signals  ******\
-	output LCD_BLON,
-	inout [7:0] LCD_DATA,
-	output LCD_EN,
-	output LCD_ON,
-	output LCD_RS,
-	output LCD_RW,
-\***************************/
+		.o_I2C_SCLK(I2C_SCLK),
+		.I2C_SDAT(I2C_SDAT),
+		.i_AUD_ADCDAT(AUD_ADCDAT),
+		.ADCLRCK(AUD_ADCLRCK),
+		.o_AUD_DACDAT(AUD_DACDAT),
+		.DACLRCK(AUD_DACLRCK),
+
+		.LCD_BLON(LCD_BLON),
+		.LCD_DATA(LCD_DATA),
+		.LCD_EN(LCD_EN),
+		.LCD_ON(LCD_ON),
+		.LCD_RS(LCD_RS),
+		.LCD_RW(LCD_RW),
+		
+		.HEX0(HEX0),
+		.HEX1(HEX1),
+		.HEX2(HEX2),
+		.HEX3(HEX3),
+		.HEX4(HEX4),
+		.HEX5(HEX5),
+		.HEX6(HEX6),
+		.HEX7(HEX7)
+	);
 
 endmodule

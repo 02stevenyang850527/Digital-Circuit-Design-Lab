@@ -4,10 +4,10 @@ module Para2Seri (
     input        i_start,
     input [15:0] sram_dq,
     output       aud_dacdat,
-    output       o_finished
+	 output		  o_finished
 );
-    localparam IDLE = 1;
-    localparam RUN = 2;
+    localparam IDLE = 0;
+    localparam RUN = 1;
     logic state_r, state_w, finished_w, finished_r;
     logic [3:0] count_r, count_w;
     logic [15:0] data_r, data_w;
@@ -45,12 +45,12 @@ module Para2Seri (
         endcase
     end
 
-    always_ff @(posedge i_clk or posedge i_rst)
+    always_ff @(posedge i_clk or posedge i_rst) begin
         if (i_rst) begin
             count_r     <= 0;
             finished_r  <= 0;
             data_r      <= 0;
-            state_w     <= IDLE;
+            state_r     <= IDLE;
         end
         else begin
             count_r     <= count_w;

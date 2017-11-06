@@ -9,6 +9,7 @@ module I2Cinitialize (
 
     localparam IDLE = 1;
     localparam SEND = 2;
+	 localparam DONE = 3;
 
     parameter bit [23:0] CONFIG_DATA [9:0] = '{
         24'b0011010_0_000_0000_0_1001_0111, //Left Line In
@@ -23,13 +24,13 @@ module I2Cinitialize (
         24'b0011010_0_000_1001_0_0000_0001  //Active Ctrl
     };
 
-    logic        state_r, state_w;
+    logic [1:0]  state_r, state_w;
     logic        send_start_r, send_start_w;
     logic        finished_r, finished_w;
     logic [23:0] data_r, data_w;
     logic  [3:0] count_r, count_w;
     logic        send_finished, send_scl;
-    logic        sda;
+    wire        sda;
 
     assign o_finished = finished_r;
     assign o_scl = send_scl;
@@ -41,6 +42,7 @@ module I2Cinitialize (
         .i_rst(i_rst),
         .i_data(data_r),
         .o_finished(send_finished),
+		  .o_scl(send_scl),
         .o_sda(sda)
     );
 
@@ -49,7 +51,7 @@ module I2Cinitialize (
         send_start_w = send_start_r;
         finished_w   = finished_r;
         data_w       = data_r;
-        count_w      = count_w;
+        count_w      = count_r;
         
         case (state_r)
             IDLE:
@@ -70,11 +72,15 @@ module I2Cinitialize (
                     end
                 end
                 if (count_r == 9) begin
-                    state_w = IDLE;
+                    state_w = DONE;
                     finished_w = 1'b1;
                     count_w = 0;
                 end
             end
+				DONE:
+				begin
+					 finished_w = 1;
+				end
         endcase
     end
 
@@ -83,14 +89,14 @@ module I2Cinitialize (
             state_r     <= IDLE;
             count_r     <= 0;
             finished_r  <= 0;
-            send_data_r <= 0;
+            send_start_r <= 0;
             data_r      <= 0;
         end
         else begin
             state_r     <= state_w;
             count_r     <= count_w;
             finished_r  <= finished_w;
-            send_data_r <= sebd_data_w;
+            send_start_r <= send_start_w;
             data_r      <= data_w;
         end
     end
