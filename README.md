@@ -27,6 +27,7 @@ Human Computer Interaction (HCI) is a popular field aims at exploring the way ho
 [User Manual]: <https://github.com/02stevenyang850527/Digital-Circuit-Design-Lab/blob/master/final/report/Final%20Project%20User%20Manual.pdf>
 [Tutorial]: <https://github.com/02stevenyang850527/Digital-Circuit-Design-Lab/blob/master/final/report/Final%20Project%20Tutorial.pdf>
 
-####Group members
-[awinder0234](https://github.com/awinder0230)
+#### My Group Members
+
+[awinder0234](https://github.com/awinder0230)  
 [snowmanganggang](https://github.com/snowmanganggang)
