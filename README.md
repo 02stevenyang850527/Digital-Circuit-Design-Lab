@@ -20,7 +20,7 @@ Utilize the RSA algorithm and Utilize the powerful computation of FPGA to decode
 
 ## Lab3: Audio Recorder
 
-Design an audio recorder on FPGA with the function of recording, playing forwardly, playing backwardly, and several speed of acceleration version.  
+Design an audio recorder on FPGA with the function of recording, playing forwardly, playing backwardly, and several speed of acceleration version. *I2C protocal* is used to initialize *WM8731* chip, and sram is used to store input signal data.
 
 [User Manual](https://github.com/02stevenyang850527/Digital-Circuit-Design-Lab/blob/master/lab3/report/User_Manual.pdf)  
 [Tutorial](https://github.com/02stevenyang850527/Digital-Circuit-Design-Lab/blob/master/lab3/report/Tutorial.pdf)
