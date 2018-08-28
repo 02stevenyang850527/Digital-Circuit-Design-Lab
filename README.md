@@ -13,7 +13,7 @@ A roll call machine which generates a random number range between 0 to 15 every 
 
 ## Lab 2: RSA Decoder
 
-Utilize the RSA algorithm and Utilize the powerful computation of FPGA to decode the encoded data.
+Utilize the RSA algorithm and Utilize the powerful computation of FPGA to decode the encoded data. *RS232* is used to transmit the encrypted and decrypted data.
 
 [User Manual](https://github.com/02stevenyang850527/Digital-Circuit-Design-Lab/blob/master/lab2/report/User_Manual.pdf)  
 [Tutorial](https://github.com/02stevenyang850527/Digital-Circuit-Design-Lab/blob/master/lab2/report/Tutorial.pdf)
