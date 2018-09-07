@@ -13,14 +13,14 @@ A roll call machine which generates a random number range between 0 to 15 every 
 
 ## Lab 2: RSA Decoder
 
-Utilize the RSA algorithm and Utilize the powerful computation of FPGA to decode the encoded data. *RS232* is used to transmit the encrypted and decrypted data.
+Implement *Montgomery Algorithm* and *RS232 protocal* to decrypt and transmit data.
 
 [User Manual](https://github.com/02stevenyang850527/Digital-Circuit-Design-Lab/blob/master/lab2/report/User_Manual.pdf)  
 [Tutorial](https://github.com/02stevenyang850527/Digital-Circuit-Design-Lab/blob/master/lab2/report/Tutorial.pdf)
 
 ## Lab3: Audio Recorder
 
-Design an audio recorder on FPGA with the function of recording, playing forwardly, playing backwardly, and several speed of acceleration version. *I2C protocal* is used to initialize *WM8731* chip, and sram is used to store input signal data.
+Design an audio recorder on FPGA with the function of recording, playing forwardly, playing backwardly, and several speed of acceleration version. *I2C protocal* is used to configure *WM8731* chip, sram is used to store input audio signal, and *I2C protocal* to transmit signal data.
 
 [User Manual](https://github.com/02stevenyang850527/Digital-Circuit-Design-Lab/blob/master/lab3/report/User_Manual.pdf)  
 [Tutorial](https://github.com/02stevenyang850527/Digital-Circuit-Design-Lab/blob/master/lab3/report/Tutorial.pdf)
